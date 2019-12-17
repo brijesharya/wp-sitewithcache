@@ -1,0 +1,46 @@
+version: '3.7'
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - ./db_data/mysql:/var/lib/mysql
+    restart: always
+    env_file:
+      ./env/.env
+    networks:
+       - overlay
+  wp:
+    build: ./wordpress/
+    volumes:
+       - ./php-uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+       - ./site1:/var/www/html
+    env_file:
+      ./env/.wp-env
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - overlay
+  nginx:
+    image: nginx
+    depends_on:
+      - wp
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./logs/nginx:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    networks:
+      - overlay
+
+  redis:
+    image: redis:latest
+    restart: always
+    networks:
+      - overlay
+
+networks:
+  overlay:
